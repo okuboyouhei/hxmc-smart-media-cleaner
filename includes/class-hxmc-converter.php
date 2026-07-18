@@ -24,6 +24,103 @@ class HXMC_Converter {
 
 	const META_KEY = '_hxmc_webp';
 
+	/**
+	 * Serve WebP twins for metadata-driven output (featured images, theme
+	 * templates via wp_get_attachment_image, render-time srcset). Stored
+	 * content is rewritten at conversion time; these filters cover every URL
+	 * WordPress generates dynamically from attachment metadata, which still
+	 * points at the originals (twins are intentionally not registered there).
+	 * Only URLs whose generated twin actually exists are swapped, so partial
+	 * conversions degrade gracefully. Priority 9: runs before HXMC_Replacer's
+	 * ?v= filters (10) so the version lands on the final URL.
+	 */
+	public static function init() {
+		// Order matters: srcset must be computed by core from the ORIGINAL
+		// filenames (a .webp src makes wp_calculate_image_srcset bail before
+		// its filter fires, killing responsive images), so the src swap
+		// happens at the final-HTML stage instead of wp_get_attachment_image_src.
+		add_filter( 'wp_calculate_image_srcset', array( __CLASS__, 'filter_srcset' ), 9, 5 );
+		add_filter( 'wp_get_attachment_image', array( __CLASS__, 'filter_attachment_image_html' ), 9, 2 );
+		add_filter( 'wp_content_img_tag', array( __CLASS__, 'filter_content_img_tag' ), 9, 3 );
+	}
+
+	/**
+	 * Final <img> HTML from wp_get_attachment_image() / the_post_thumbnail().
+	 */
+	public static function filter_attachment_image_html( $html, $attachment_id ) {
+		return self::swap_urls_in_html( $html, $attachment_id );
+	}
+
+	/**
+	 * Content <img> tags at render time (wp_filter_content_tags).
+	 */
+	public static function filter_content_img_tag( $filtered_image, $context, $attachment_id ) {
+		if ( ! $attachment_id ) {
+			return $filtered_image;
+		}
+		return self::swap_urls_in_html( $filtered_image, $attachment_id );
+	}
+
+	/**
+	 * Swap every original-file URL in an HTML fragment to its WebP twin
+	 * (only where the twin was actually generated).
+	 */
+	public static function swap_urls_in_html( $html, $attachment_id ) {
+		if ( ! is_string( $html ) || '' === $html ) {
+			return $html;
+		}
+		$webp_meta = get_post_meta( (int) $attachment_id, self::META_KEY, true );
+		if ( ! is_array( $webp_meta ) || empty( $webp_meta['files'] ) ) {
+			return $html;
+		}
+		return preg_replace_callback(
+			'#[^\s"\x27>]+\.(?:jpe?g|png|gif)#i',
+			function ( $m ) use ( $attachment_id ) {
+				$swapped = self::to_webp_url( $m[0], $attachment_id );
+				return $swapped ? $swapped : $m[0];
+			},
+			$html
+		);
+	}
+
+	public static function filter_srcset( $sources, $size_array, $image_src, $image_meta, $attachment_id ) {
+		if ( ! is_array( $sources ) ) {
+			return $sources;
+		}
+		foreach ( $sources as $k => $source ) {
+			if ( empty( $source['url'] ) ) {
+				continue;
+			}
+			$swapped = self::to_webp_url( $source['url'], $attachment_id );
+			if ( $swapped ) {
+				$sources[ $k ]['url'] = $swapped;
+			}
+		}
+		return $sources;
+	}
+
+	/**
+	 * Map a generated original-file URL to its WebP twin, or null when no
+	 * twin was generated for that exact file.
+	 */
+	public static function to_webp_url( $url, $attachment_id ) {
+		$webp_meta = get_post_meta( (int) $attachment_id, self::META_KEY, true );
+		if ( ! is_array( $webp_meta ) || empty( $webp_meta['files'] ) ) {
+			return null;
+		}
+		$path = wp_parse_url( $url, PHP_URL_PATH );
+		if ( ! preg_match( '/\.(jpe?g|png|gif)$/i', (string) $path ) ) {
+			return null;
+		}
+		$candidate = preg_replace( '/\.(jpe?g|png|gif)$/i', '.webp', wp_basename( (string) $path ) );
+		foreach ( $webp_meta['files'] as $rel ) {
+			if ( wp_basename( $rel ) === $candidate ) {
+				return preg_replace( '/\.(jpe?g|png|gif)$/i', '.webp', $url );
+			}
+		}
+		return null;
+	}
+
 	public static function supported() {
 		if ( class_exists( 'Imagick' ) ) {
 			$formats = Imagick::queryFormats( 'WEBP' );

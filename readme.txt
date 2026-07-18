@@ -4,7 +4,7 @@ Tags: media, webp, cleanup, rename, compression
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.3.8
+Stable tag: 0.3.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -55,6 +55,9 @@ On Apache/LiteSpeed, nothing — the fallback rules serve the kept original auto
 String replacement inside serialized values corrupts them, so HXMC skips serialized rows on purpose. The 302 fallback redirect covers those references instead.
 
 == Changelog ==
+
+= 0.3.9 =
+* Fix: WebP twins are now served for metadata-driven output too (featured images, theme templates, render-time srcset). Previously only URLs stored in content were rewritten, so themes calling wp_get_attachment_image() kept serving originals.
 
 = 0.3.8 =
 * Packaging: distribution ZIP now excludes repository-only files (CLAUDE.md); ai-reference.md and llms.txt carry synced version headers.

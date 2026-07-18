@@ -1,4 +1,4 @@
-# HXMC — Smart Media Cleaner (v0.3.8)
+# HXMC — Smart Media Cleaner (v0.3.9)
 
 > WordPress media library cleanup plugin. Code-first, no external services, GPL-2.0+. Part of the HX Series (WAHX stack) by youheiokubo.
 
