@@ -1,0 +1,174 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: HXMC — Smart Media Cleaner 0.1.0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"Language: ja\n"
+
+msgid "Smart Media Cleaner"
+msgstr "Smart Media Cleaner"
+
+msgid "Media Cleaner"
+msgstr "メディア整理"
+
+msgid "Usage detection covers: featured images, post content, custom fields, widgets/options. It cannot see theme/CSS hardcoded URLs or external sites. \"No reference found\" is a hint, not proof of non-use. This version never deletes anything."
+msgstr "使用状況の検出範囲: アイキャッチ・本文・カスタムフィールド・ウィジェット/オプション。テーマやCSSに直書きされたURL、外部サイトからの参照は検出できません。「参照未検出」はヒントであって、未使用の証明ではありません。このバージョンは何も削除しません。"
+
+msgid "WebP conversion is unavailable: this server has neither GD with WebP support nor Imagick."
+msgstr "WebP変換は利用できません: このサーバーにはWebP対応のGDもImagickもありません。"
+
+msgid "Scan usage"
+msgstr "使用状況をスキャン"
+
+msgid "All images"
+msgstr "すべての画像"
+
+msgid "No reference found"
+msgstr "参照未検出"
+
+msgid "Non-ASCII filename"
+msgstr "非ASCIIファイル名"
+
+msgid "No WebP yet"
+msgstr "WebP未変換"
+
+msgid "Search filename…"
+msgstr "ファイル名を検索…"
+
+msgid "WebP quality"
+msgstr "WebP品質"
+
+msgid "File"
+msgstr "ファイル"
+
+msgid "Usage"
+msgstr "使用状況"
+
+msgid "WebP"
+msgstr "WebP"
+
+msgid "Size"
+msgstr "サイズ"
+
+msgid "Actions"
+msgstr "操作"
+
+msgid "non-ASCII"
+msgstr "非ASCII"
+
+msgid "Apply"
+msgstr "適用"
+
+msgid "Cancel"
+msgstr "キャンセル"
+
+msgid "Not scanned"
+msgstr "未スキャン"
+
+msgid "n/a"
+msgstr "対象外"
+
+msgid "Scan"
+msgstr "スキャン"
+
+msgid "Rename"
+msgstr "リネーム"
+
+msgid "No images match."
+msgstr "該当する画像はありません。"
+
+msgid "Prev"
+msgstr "前へ"
+
+msgid "Next"
+msgstr "次へ"
+
+msgid "Rename this file? URLs in content will be rewritten and a 302 fallback will be registered."
+msgstr "このファイルをリネームしますか? 本文内のURLは書き換えられ、旧URLには302フォールバックが登録されます。"
+
+msgid "Generate WebP for this image? Originals are kept."
+msgstr "この画像のWebPを生成しますか? オリジナルは保持されます。"
+
+msgid "Use lowercase letters, numbers, hyphens and underscores only."
+msgstr "英小文字・数字・ハイフン・アンダースコアのみ使用できます。"
+
+msgid "Attachment file not found."
+msgstr "添付ファイルが見つかりません。"
+
+msgid "File does not exist on disk."
+msgstr "ファイルがディスク上に存在しません。"
+
+msgid "Could not find a free filename."
+msgstr "空いているファイル名が見つかりませんでした。"
+
+msgid "Filesystem rename failed."
+msgstr "ファイルシステム上のリネームに失敗しました。"
+
+msgid "Neither GD (with WebP) nor Imagick is available on this server."
+msgstr "このサーバーにはWebP対応のGDもImagickもありません。"
+
+msgid "This file type cannot be converted (already WebP, SVG, or animated GIF)."
+msgstr "このファイル形式は変換できません(既にWebP、SVG、またはアニメーションGIF)。"
+
+msgid "WebP encoding failed for all files."
+msgstr "すべてのファイルでWebPエンコードに失敗しました。"
+
+msgid "WebP (−%s)"
+msgstr "WebP (−%s)"
+
+msgid "%d reference"
+msgid_plural "%d references"
+msgstr[0] "%d件の参照"
+
+msgid "WebP fallback for non-supporting browsers is active (uploads/.htaccess)."
+msgstr "WebP非対応ブラウザ向けフォールバックは有効です(uploads/.htaccess)。"
+
+msgid "WebP fallback rules could not be written to uploads/.htaccess. Check file permissions, or deactivate and reactivate the plugin."
+msgstr "uploads/.htaccess にWebPフォールバックルールを書き込めませんでした。ファイル権限を確認するか、プラグインを再有効化してください。"
+
+msgid "Non-Apache server detected: add the WebP fallback to your server config manually"
+msgstr "Apache以外のサーバーを検出: WebPフォールバックはサーバー設定に手動で追加してください"
+
+msgid "Open in media edit screen"
+msgstr "メディア編集画面で開く"
+
+msgid "Compress"
+msgstr "圧縮"
+
+msgid "Optimization"
+msgstr "最適化"
+
+msgid "Compressed (−%s)"
+msgstr "圧縮済み (−%s)"
+
+msgid "Compress this image in place? The original file is OVERWRITTEN (lossy for JPEG, irreversible). Files are only overwritten when the result is smaller."
+msgstr "この画像をその場で圧縮しますか? 元ファイルは上書きされます(JPEGは非可逆・復元不可)。上書きは結果が小さくなる場合のみ行われます。"
+
+msgid "Only JPEG and PNG files can be compressed in place."
+msgstr "その場での圧縮はJPEGとPNGのみ対応しています。"
+
+msgid "Compression failed for all files."
+msgstr "すべてのファイルで圧縮に失敗しました。"
+
+msgid "Replace"
+msgstr "差し替え"
+
+msgid "Replaced %s"
+msgstr "差し替え済み %s"
+
+msgid "Replace this file with the selected one? The filename and URLs stay the same; thumbnails are regenerated, WebP twins are reset, and references get a fresh ?v= cache-busting parameter."
+msgstr "選択したファイルで差し替えますか? ファイル名とURLはそのまま、サムネイルは再生成、WebPはリセットされ、参照には新しい ?v= キャッシュバスターが付与されます。"
+
+msgid "The uploaded file must be the same type as the existing one (%s), because the filename is kept."
+msgstr "ファイル名を維持するため、アップロードするファイルは既存と同じ形式(%s)である必要があります。"
+
+msgid "Could not overwrite the existing file."
+msgstr "既存ファイルを上書きできませんでした。"
+
+msgid "No file was uploaded."
+msgstr "ファイルがアップロードされていません。"
+
+msgid "The uploaded image exceeds %dpx and WordPress would rename it to a -scaled file, breaking the kept URLs. Please resize it below the threshold first."
+msgstr "アップロードされた画像は%dpxを超えており、WordPressが-scaledファイルにリネームしてURL維持が壊れます。先に閾値以下にリサイズしてください。"

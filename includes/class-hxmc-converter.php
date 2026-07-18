@@ -1,0 +1,199 @@
+<?php
+/**
+ * HXMC Converter — WebP generation with built-in compression.
+ *
+ * Design decisions:
+ * - Compression IS the WebP quality parameter (default 82). One knob,
+ *   not two features (subtraction).
+ * - Originals are kept on disk (insurance; old URLs keep working even
+ *   without the redirect map).
+ * - Generates .webp twins for the original and every intermediate size,
+ *   rewrites references, records the redirect map anyway (covers the case
+ *   where originals are manually deleted later).
+ * - GD or Imagick, whichever is available. No external services.
+ * - Skips images that are already WebP/AVIF/SVG, and animated GIFs
+ *   (GD flattens animation — honest scoping: we refuse rather than break).
+ * - Fires `hxmc_after_convert` for the HXMD bridge.
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+class HXMC_Converter {
+
+	const META_KEY = '_hxmc_webp';
+
+	public static function supported() {
+		if ( class_exists( 'Imagick' ) ) {
+			$formats = Imagick::queryFormats( 'WEBP' );
+			if ( ! empty( $formats ) ) {
+				return 'imagick';
+			}
+		}
+		if ( function_exists( 'imagewebp' ) ) {
+			return 'gd';
+		}
+		return false;
+	}
+
+	public static function is_convertible( $attachment_id ) {
+		$mime = get_post_mime_type( $attachment_id );
+		if ( ! in_array( $mime, array( 'image/jpeg', 'image/png', 'image/gif' ), true ) ) {
+			return false;
+		}
+		if ( 'image/gif' === $mime ) {
+			$path = get_attached_file( $attachment_id );
+			if ( $path && self::is_animated_gif( $path ) ) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * @return array|WP_Error ['files' => n, 'saved_bytes' => n, 'new_url' => ...]
+	 */
+	public static function convert( $attachment_id, $quality = null ) {
+		$engine = self::supported();
+		if ( ! $engine ) {
+			return new WP_Error( 'hxmc_no_engine', __( 'Neither GD (with WebP) nor Imagick is available on this server.', 'hxmc-smart-media-cleaner' ) );
+		}
+		if ( ! self::is_convertible( $attachment_id ) ) {
+			return new WP_Error( 'hxmc_not_convertible', __( 'This file type cannot be converted (already WebP, SVG, or animated GIF).', 'hxmc-smart-media-cleaner' ) );
+		}
+
+		$quality = null === $quality ? (int) get_option( 'hxmc_webp_quality', 82 ) : (int) $quality;
+		$quality = max( 1, min( 100, $quality ) );
+
+		$file = get_post_meta( $attachment_id, '_wp_attached_file', true );
+		if ( ! $file ) {
+			return new WP_Error( 'hxmc_no_file', __( 'Attachment file not found.', 'hxmc-smart-media-cleaner' ) );
+		}
+
+		$uploads = wp_get_upload_dir();
+		$dir_rel = dirname( $file );
+		$dir_rel = ( '.' === $dir_rel ) ? '' : trailingslashit( $dir_rel );
+		$dir_abs = trailingslashit( $uploads['basedir'] ) . $dir_rel;
+
+		// Collect original + all sizes.
+		$targets = array( wp_basename( $file ) );
+		$meta    = wp_get_attachment_metadata( $attachment_id );
+		if ( ! empty( $meta['sizes'] ) && is_array( $meta['sizes'] ) ) {
+			foreach ( $meta['sizes'] as $info ) {
+				if ( ! empty( $info['file'] ) ) {
+					$targets[] = $info['file'];
+				}
+			}
+		}
+		$targets = array_unique( $targets );
+
+		$generated   = array();
+		$saved_bytes = 0;
+		$base_url    = trailingslashit( $uploads['baseurl'] );
+
+		foreach ( $targets as $basename ) {
+			$src = $dir_abs . $basename;
+			if ( ! file_exists( $src ) ) {
+				continue;
+			}
+			$webp_basename = preg_replace( '/\.[^.]+$/', '', $basename ) . '.webp';
+			$dst           = $dir_abs . $webp_basename;
+
+			$ok = self::encode( $src, $dst, $quality, $engine );
+			if ( ! $ok ) {
+				continue;
+			}
+			$saved_bytes += max( 0, filesize( $src ) - filesize( $dst ) );
+			$generated[] = $dir_rel . $webp_basename;
+
+			$old_url = $base_url . $dir_rel . $basename;
+			$new_url = $base_url . $dir_rel . $webp_basename;
+			HXMC_Renamer::rewrite_everywhere( $old_url, $new_url );
+			HXMC_DB::add_redirect( wp_parse_url( $old_url, PHP_URL_PATH ), $new_url, $attachment_id );
+		}
+
+		if ( empty( $generated ) ) {
+			return new WP_Error( 'hxmc_encode_failed', __( 'WebP encoding failed for all files.', 'hxmc-smart-media-cleaner' ) );
+		}
+
+		update_post_meta(
+			$attachment_id,
+			self::META_KEY,
+			array(
+				'files'        => $generated,
+				'quality'      => $quality,
+				'saved_bytes'  => $saved_bytes,
+				'converted_at' => time(),
+			)
+		);
+
+		$new_main = $base_url . $dir_rel . preg_replace( '/\.[^.]+$/', '', wp_basename( $file ) ) . '.webp';
+
+		/**
+		 * Fires after a successful WebP conversion. HXMD bridge listens here.
+		 */
+		do_action( 'hxmc_after_convert', $attachment_id, $generated, $quality, $saved_bytes );
+
+		return array(
+			'files'       => count( $generated ),
+			'saved_bytes' => $saved_bytes,
+			'new_url'     => $new_main,
+		);
+	}
+
+	private static function encode( $src, $dst, $quality, $engine ) {
+		if ( 'imagick' === $engine ) {
+			try {
+				$im = new Imagick( $src );
+				$im->setImageFormat( 'webp' );
+				$im->setImageCompressionQuality( $quality );
+				$ok = $im->writeImage( $dst );
+				$im->clear();
+				return (bool) $ok;
+			} catch ( Exception $e ) {
+				return false;
+			}
+		}
+
+		$info = getimagesize( $src );
+		if ( ! $info ) {
+			return false;
+		}
+		switch ( $info['mime'] ) {
+			case 'image/jpeg':
+				$img = imagecreatefromjpeg( $src );
+				break;
+			case 'image/png':
+				$img = imagecreatefrompng( $src );
+				if ( $img ) {
+					imagepalettetotruecolor( $img ); // lesson: work on truecolor
+					imagealphablending( $img, true );
+					imagesavealpha( $img, true );
+				}
+				break;
+			case 'image/gif':
+				$img = imagecreatefromgif( $src );
+				if ( $img ) {
+					imagepalettetotruecolor( $img );
+				}
+				break;
+			default:
+				return false;
+		}
+		if ( ! $img ) {
+			return false;
+		}
+		$ok = imagewebp( $img, $dst, $quality );
+		imagedestroy( $img );
+		return (bool) $ok;
+	}
+
+	private static function is_animated_gif( $path ) {
+		$contents = file_get_contents( $path, false, null, 0, 512 * 1024 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		if ( false === $contents ) {
+			return false;
+		}
+		return preg_match_all( '/\x00\x21\xF9\x04/', $contents ) > 1;
+	}
+}

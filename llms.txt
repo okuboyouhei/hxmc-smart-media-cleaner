@@ -1,0 +1,15 @@
+# HXMC — Smart Media Cleaner (v0.3.8)
+
+> WordPress media library cleanup plugin. Code-first, no external services, GPL-2.0+. Part of the HX Series (WAHX stack) by youheiokubo.
+
+Five focused tools: usage scan (read-only, honest about what it cannot see), non-ASCII filename rename (URL rewrite + 302 fallback), local WebP conversion with Apache Accept-header fallback for legacy browsers, in-place compression (overwrite only when smaller), and same-filename media replace with 3-layer cache busting (?v= in content, admin thumbnails, core URL filters).
+
+## Docs
+- readme.txt: user documentation and FAQ
+- ai-reference.md: machine-oriented API surface, invariants, hooks
+- CLAUDE.md: development log, architecture, lessons learned
+
+## Key facts
+- Admin-only; zero front-end JS/CSS/cookies; only front-end code path is a 404-time 302 redirect for /uploads/ paths
+- Hooks: hxmc_after_rename / hxmc_after_convert / hxmc_after_compress / hxmc_after_replace
+- Never deletes media; irreversible operations (compress, replace) sit behind explicit confirm dialogs
