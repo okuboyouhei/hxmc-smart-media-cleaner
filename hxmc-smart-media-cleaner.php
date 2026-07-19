@@ -3,7 +3,7 @@
  * Plugin Name: HXMC — Smart Media Cleaner
  * Plugin URI: https://github.com/okuboyouhei/hxmc-smart-media-cleaner
  * Description: Code-first media library cleanup. Detect unused images, rename non-ASCII filenames safely, convert to WebP with built-in compression. No external services.
- * Version: 0.3.9
+ * Version: 0.3.10
  * Requires at least: 6.2
  * Requires PHP: 7.4
  * Author: youheiokubo
@@ -11,14 +11,13 @@
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: hxmc-smart-media-cleaner
- * Domain Path: /languages
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'HXMC_VERSION', '0.3.9' );
+define( 'HXMC_VERSION', '0.3.10' );
 define( 'HXMC_DB_VERSION', '1' );
 define( 'HXMC_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'HXMC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -39,14 +38,6 @@ function hxmc_activate() {
 	if ( HXMC_Htaccess::is_apache_like() ) {
 		HXMC_Htaccess::install();
 	}
-}
-
-add_action( 'init', 'hxmc_load_textdomain' );
-function hxmc_load_textdomain() {
-	// Bundled ja translation ships from day one (this plugin's primary audience
-	// deals with Japanese filenames). Once a wordpress.org language pack exists,
-	// WP_LANG_DIR/plugins takes precedence automatically, so both coexist.
-	load_plugin_textdomain( 'hxmc-smart-media-cleaner', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' ); // phpcs:ignore PluginCheck.CodeAnalysis.DiscouragedFunctions.load_plugin_textdomainFound
 }
 
 add_action( 'plugins_loaded', array( 'HXMC_DB', 'maybe_upgrade' ) );

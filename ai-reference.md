@@ -3,7 +3,7 @@
 Machine-oriented reference for AI agents working with this plugin. Human docs: readme.txt. Development log: CLAUDE.md.
 
 ## Identity
-- Version: 0.3.9
+- Version: 0.3.10
 - Slug / Text Domain: `hxmc-smart-media-cleaner`
 - Series: HX Series #6 (WAHX stack: WordPress + Alpine.js + htmx + HX plugins)
 - Philosophy: code-first, subtraction design, honest scoping, no external services, GPL.
