@@ -86,6 +86,9 @@ class HXMC_Replacer {
 		if ( ! $file ) {
 			return new WP_Error( 'hxmc_no_file', __( 'Attachment file not found.', 'hxmc-smart-media-cleaner' ) );
 		}
+		if ( ! HXMC_Paths::is_valid_relative( $file ) ) {
+			return HXMC_Paths::error();
+		}
 
 		$uploads  = wp_get_upload_dir();
 		$dir_rel  = dirname( $file );
@@ -140,7 +143,7 @@ class HXMC_Replacer {
 					HXMC_Renamer::rewrite_everywhere( $base_url . $webp_rel, $base_url . $orig_rel );
 					HXMC_DB::add_redirect( wp_parse_url( $base_url . $webp_rel, PHP_URL_PATH ), $base_url . $orig_rel, $attachment_id );
 				}
-				if ( file_exists( $webp_abs ) ) {
+				if ( HXMC_Paths::is_valid_relative( $webp_rel ) && file_exists( $webp_abs ) && HXMC_Paths::is_inside_uploads( $webp_abs ) ) {
 					unlink( $webp_abs ); // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
 				}
 			}
@@ -149,12 +152,19 @@ class HXMC_Replacer {
 
 		// 2. Delete old intermediate size files.
 		foreach ( $old_sizes as $info ) {
-			if ( ! empty( $info['file'] ) && file_exists( $dir_abs . $info['file'] ) ) {
-				unlink( $dir_abs . $info['file'] ); // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
+			if ( empty( $info['file'] ) || ! HXMC_Paths::is_valid_size_basename( $info['file'] ) ) {
+				continue;
+			}
+			$size_abs = $dir_abs . $info['file'];
+			if ( file_exists( $size_abs ) && HXMC_Paths::is_inside_uploads( $size_abs ) ) {
+				unlink( $size_abs ); // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
 			}
 		}
 
 		// 3. Overwrite the main file (same filename).
+		if ( ! HXMC_Paths::is_safe_target( $main_abs ) ) {
+			return HXMC_Paths::error();
+		}
 		if ( ! @copy( $tmp_path, $main_abs ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_copy
 			return new WP_Error( 'hxmc_write_failed', __( 'Could not overwrite the existing file.', 'hxmc-smart-media-cleaner' ) );
 		}

@@ -46,6 +46,9 @@ class HXMC_Compressor {
 		if ( ! $file ) {
 			return new WP_Error( 'hxmc_no_file', __( 'Attachment file not found.', 'hxmc-smart-media-cleaner' ) );
 		}
+		if ( ! HXMC_Paths::is_valid_relative( $file ) ) {
+			return HXMC_Paths::error();
+		}
 
 		$uploads = wp_get_upload_dir();
 		$dir_rel = dirname( $file );
@@ -68,8 +71,13 @@ class HXMC_Compressor {
 		$saved_bytes = 0;
 
 		foreach ( $targets as $basename ) {
+			if ( ! HXMC_Paths::is_valid_size_basename( $basename ) && wp_basename( $file ) !== $basename ) {
+				$skipped++;
+				continue;
+			}
 			$src = $dir_abs . $basename;
-			if ( ! file_exists( $src ) ) {
+			if ( ! file_exists( $src ) || ! HXMC_Paths::is_inside_uploads( $src ) ) {
+				$skipped++;
 				continue;
 			}
 			$result = self::reencode_smaller( $src, $quality );
@@ -186,7 +194,9 @@ class HXMC_Compressor {
 			return null; // Re-encode did not help; keep the original bytes.
 		}
 
-		if ( ! rename( $tmp, $src ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename
+		// Containment re-check at the write site: $src must still resolve
+		// inside the uploads directory before its bytes are replaced.
+		if ( ! HXMC_Paths::is_inside_uploads( $src ) || ! rename( $tmp, $src ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename
 			unlink( $tmp ); // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
 			return null;
 		}

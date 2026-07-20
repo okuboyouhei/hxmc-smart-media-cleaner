@@ -53,6 +53,9 @@ Fired from logic classes after success (not from DB layer).
 15. `insert_with_markers()` needs `wp-admin/includes/misc.php` outside admin context.
 16. `Vary: Accept` must be scoped to .webp URIs (`SetEnvIf` + `Header append ... env=`) — a blanket Vary on all uploads would fragment CDN caches for no reason.
 
+## Path containment (v0.3.11, review round 2)
+Reviewer (AI-assisted) flagged: compressor rename($tmp,$src) trusts paths derived from _wp_attached_file / size metadata — tampered DB values could write outside uploads. Fix: `class-hxmc-paths.php`, two mandatory layers everywhere files are touched: (1) `validate_file()` on the DB-sourced relative value (rejects ../ and absolute) + size entries must be bare basenames; (2) `realpath()` containment of the final absolute path under uploads basedir — existing paths via `is_inside_uploads()`, write targets via `is_safe_target()` (parent realpath + clean basename). Applied across Compressor / Renamer / Converter / Replacer at every rename/copy/unlink/write site. Lesson #25: attachment metadata is DB-sourced and therefore untrusted input for filesystem purposes; validate at entry AND re-check containment adjacent to each destructive call. Verified with traversal-tampered _wp_attached_file and a hostile sizes[] entry: all refused, victim file untouched, legit ops unaffected.
+
 ## Roadmap
 - v0.2: bulk rename/convert, HXMD bridge on the HXMD side, quarantine folder for unused images (explicit safeguards), `hxmc_after_delete` hook
 - Not planned: external compression APIs, 301s, front-end asset injection

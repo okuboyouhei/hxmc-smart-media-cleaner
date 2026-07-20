@@ -4,7 +4,7 @@ Tags: media, webp, cleanup, rename, compression
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.3.10
+Stable tag: 0.3.11
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -55,6 +55,9 @@ On Apache/LiteSpeed, nothing — the fallback rules serve the kept original auto
 String replacement inside serialized values corrupts them, so HXMC skips serialized rows on purpose. The 302 fallback redirect covers those references instead.
 
 == Changelog ==
+
+= 0.3.11 =
+* Security hardening: every file operation (compress, rename, convert, replace) now validates that paths derived from attachment metadata resolve inside the uploads directory (validate_file + realpath containment), refusing tampered _wp_attached_file or size entries.
 
 = 0.3.10 =
 * Removed bundled translation files and load_plugin_textdomain() per WordPress.org review; translations will be provided via translate.wordpress.org.

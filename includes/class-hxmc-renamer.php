@@ -36,11 +36,17 @@ class HXMC_Renamer {
 		if ( ! $file ) {
 			return new WP_Error( 'hxmc_no_file', __( 'Attachment file not found.', 'hxmc-smart-media-cleaner' ) );
 		}
+		if ( ! HXMC_Paths::is_valid_relative( $file ) ) {
+			return HXMC_Paths::error();
+		}
 
 		$uploads  = wp_get_upload_dir();
 		$old_path = trailingslashit( $uploads['basedir'] ) . $file;
 		if ( ! file_exists( $old_path ) ) {
 			return new WP_Error( 'hxmc_missing', __( 'File does not exist on disk.', 'hxmc-smart-media-cleaner' ) );
+		}
+		if ( ! HXMC_Paths::is_inside_uploads( $old_path ) ) {
+			return HXMC_Paths::error();
 		}
 
 		$dir_rel  = dirname( $file );
@@ -63,6 +69,10 @@ class HXMC_Renamer {
 		$new_file = $dir_rel . $new_slug . '.' . $ext;
 		$new_path = trailingslashit( $uploads['basedir'] ) . $new_file;
 
+		if ( ! HXMC_Paths::is_safe_target( $new_path ) ) {
+			return HXMC_Paths::error();
+		}
+
 		// 1. Rename main file.
 		if ( ! rename( $old_path, $new_path ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename
 			return new WP_Error( 'hxmc_rename_failed', __( 'Filesystem rename failed.', 'hxmc-smart-media-cleaner' ) );
@@ -79,6 +89,9 @@ class HXMC_Renamer {
 					continue;
 				}
 				$old_size_base = $info['file'];
+				if ( ! HXMC_Paths::is_valid_size_basename( $old_size_base ) ) {
+					continue;
+				}
 				$suffix        = self::size_suffix( $old_size_base, $old_base );
 				if ( null === $suffix ) {
 					continue;
@@ -87,7 +100,7 @@ class HXMC_Renamer {
 				$new_size = $new_slug . $suffix . '.' . $size_ext;
 				$old_abs  = $dir_abs . $old_size_base;
 				$new_abs  = $dir_abs . $new_size;
-				if ( file_exists( $old_abs ) ) {
+				if ( file_exists( $old_abs ) && HXMC_Paths::is_inside_uploads( $old_abs ) && HXMC_Paths::is_safe_target( $new_abs ) ) {
 					rename( $old_abs, $new_abs ); // phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename
 				}
 				$meta['sizes'][ $size ]['file'] = $new_size;

@@ -167,6 +167,9 @@ class HXMC_Converter {
 		if ( ! $file ) {
 			return new WP_Error( 'hxmc_no_file', __( 'Attachment file not found.', 'hxmc-smart-media-cleaner' ) );
 		}
+		if ( ! HXMC_Paths::is_valid_relative( $file ) ) {
+			return HXMC_Paths::error();
+		}
 
 		$uploads = wp_get_upload_dir();
 		$dir_rel = dirname( $file );
@@ -190,12 +193,18 @@ class HXMC_Converter {
 		$base_url    = trailingslashit( $uploads['baseurl'] );
 
 		foreach ( $targets as $basename ) {
+			if ( ! HXMC_Paths::is_valid_size_basename( $basename ) && wp_basename( $file ) !== $basename ) {
+				continue;
+			}
 			$src = $dir_abs . $basename;
-			if ( ! file_exists( $src ) ) {
+			if ( ! file_exists( $src ) || ! HXMC_Paths::is_inside_uploads( $src ) ) {
 				continue;
 			}
 			$webp_basename = preg_replace( '/\.[^.]+$/', '', $basename ) . '.webp';
 			$dst           = $dir_abs . $webp_basename;
+			if ( ! HXMC_Paths::is_safe_target( $dst ) ) {
+				continue;
+			}
 
 			$ok = self::encode( $src, $dst, $quality, $engine );
 			if ( ! $ok ) {

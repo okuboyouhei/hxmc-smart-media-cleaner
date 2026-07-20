@@ -3,7 +3,7 @@
  * Plugin Name: HXMC — Smart Media Cleaner
  * Plugin URI: https://github.com/okuboyouhei/hxmc-smart-media-cleaner
  * Description: Code-first media library cleanup. Detect unused images, rename non-ASCII filenames safely, convert to WebP with built-in compression. No external services.
- * Version: 0.3.10
+ * Version: 0.3.11
  * Requires at least: 6.2
  * Requires PHP: 7.4
  * Author: youheiokubo
@@ -17,11 +17,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'HXMC_VERSION', '0.3.10' );
+define( 'HXMC_VERSION', '0.3.11' );
 define( 'HXMC_DB_VERSION', '1' );
 define( 'HXMC_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'HXMC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
+require_once HXMC_PLUGIN_DIR . 'includes/class-hxmc-paths.php';
 require_once HXMC_PLUGIN_DIR . 'includes/class-hxmc-db.php';
 require_once HXMC_PLUGIN_DIR . 'includes/class-hxmc-htaccess.php';
 require_once HXMC_PLUGIN_DIR . 'includes/class-hxmc-scanner.php';
